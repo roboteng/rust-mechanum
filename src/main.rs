@@ -40,6 +40,63 @@ impl Wheel {
     }
 }
 
+struct Robot<'a> {
+    front_right:&'a mut Wheel,
+    front_left:&'a mut Wheel,
+    back_right:&'a mut Wheel,
+    back_left:&'a mut Wheel,
+}
+
+impl<'a> Robot<'a> {
+    fn forward(&mut self) {
+        self.front_left.go_forward();
+        self.front_right.go_forward();
+        self.back_left.go_forward();
+        self.back_right.go_forward();
+    }
+    fn backward(&mut self) {
+        self.front_left.go_bacwards();
+        self.front_right.go_bacwards();
+        self.back_left.go_bacwards();
+        self.back_right.go_bacwards();
+    }
+
+    fn turn_left(&mut self) {
+        self.front_left.go_bacwards();
+        self.front_right.go_forward();
+        self.back_left.go_bacwards();
+        self.back_right.go_forward();
+    }
+
+    fn turn_right(&mut self) {
+        self.front_left.go_forward();
+        self.front_right.go_bacwards();
+        self.back_left.go_forward();
+        self.back_right.go_bacwards();
+    }
+
+    fn right(&mut self) {
+        self.front_left.go_forward();
+        self.front_right.go_bacwards();
+        self.back_left.go_bacwards();
+        self.back_right.go_forward();
+    }
+
+    fn left(&mut self) {
+        self.front_left.go_bacwards();
+        self.front_right.go_forward();
+        self.back_left.go_forward();
+        self.back_right.go_bacwards();
+    }
+
+    fn stop(&mut self) {
+        self.back_left.stop();
+        self.back_right.stop();
+        self.front_left.stop();
+        self.front_right.stop();
+    }
+}
+
 fn init()-> Context {
     let dp = arduino_hal::Peripherals::take().unwrap();
     let pins = arduino_hal::pins!(dp);
@@ -65,18 +122,32 @@ fn init()-> Context {
         forward:  pins.d6.into_output().downgrade(),
         backward: pins.d5.into_output().downgrade(),
     };
-    let mut wheels = [&mut front_right, &mut front_left, &mut back_right, &mut back_left];
 
-    wheels.iter_mut().for_each(|w| w.go_forward());
+    let mut robot = Robot{
+        front_right: &mut front_right,
+        front_left: &mut front_left,
+        back_right: &mut back_right,
+        back_left: &mut back_left,
+    };
+
+    robot.forward();
+    delay_ms(1000);
+    robot.stop();
     delay_ms(1000);
 
-    wheels.iter_mut().for_each(|w| w.stop());
+    robot.left();
+    delay_ms(1000);
+    robot.stop();
     delay_ms(1000);
 
-    wheels.iter_mut().for_each(|w| w.go_bacwards());
+    robot.backward();
+    delay_ms(1000);
+    robot.stop();
     delay_ms(1000);
 
-    wheels.iter_mut().for_each(|w| w.stop());
+    robot.right();
+    delay_ms(1000);
+    robot.stop();
     delay_ms(1000);
 
     Context { led }
