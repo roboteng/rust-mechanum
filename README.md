@@ -28,7 +28,7 @@ You will be prompted to select your board - do so and you're ready to roll!
 Everything is prepared so you should be able to just
 
 ```bash
-cargo run
+cargo runx
 ```
 
 and see a blinky flashed to your board!
