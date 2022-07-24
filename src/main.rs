@@ -1,13 +1,18 @@
 #![no_std]
 #![no_main]
 
-use arduino_hal::{port::{Pin, mode::{PwmOutput}}, hal::port::{PB7}, simple_pwm::{Prescaler, Timer0Pwm, Timer2Pwm, Timer1Pwm}, delay_ms};
 use arduino_hal::simple_pwm::IntoPwmPin;
-use arduino_learn::{Robot, FRWheel, FLWheel, RLWheel, RRWheel};
+use arduino_hal::{
+    delay_ms,
+    hal::port::PB7,
+    port::{mode::PwmOutput, Pin},
+    simple_pwm::{Prescaler, Timer0Pwm, Timer1Pwm, Timer2Pwm},
+};
+use arduino_learn::{FLWheel, FRWheel, RLWheel, RRWheel, Robot};
 use panic_halt as _;
 
-struct Context{
-    led: Pin<PwmOutput<Timer0Pwm>, PB7>
+struct Context {
+    led: Pin<PwmOutput<Timer0Pwm>, PB7>,
 }
 
 #[arduino_hal::entry]
@@ -21,7 +26,7 @@ fn main() -> ! {
     }
 }
 
-fn init()-> Context {
+fn init() -> Context {
     let dp = arduino_hal::Peripherals::take().unwrap();
     let pins = arduino_hal::pins!(dp);
 
@@ -33,24 +38,24 @@ fn init()-> Context {
     let mut robot = Robot::new(
         FRWheel {
             speed: pins.d9.into_output().into_pwm(&mut timer2),
-            forward:  pins.d24.into_output().downgrade(),
+            forward: pins.d24.into_output().downgrade(),
             backward: pins.d22.into_output().downgrade(),
         },
         FLWheel {
             speed: pins.d10.into_output().into_pwm(&mut timer2),
-            forward:  pins.d28.into_output().downgrade(),
+            forward: pins.d28.into_output().downgrade(),
             backward: pins.d26.into_output().downgrade(),
         },
         RRWheel {
             speed: pins.d11.into_output().into_pwm(&mut timer1),
-            forward:  pins.d6.into_output().downgrade(),
+            forward: pins.d6.into_output().downgrade(),
             backward: pins.d5.into_output().downgrade(),
         },
         RLWheel {
             speed: pins.d12.into_output().into_pwm(&mut timer1),
-            forward:  pins.d8.into_output().downgrade(),
+            forward: pins.d8.into_output().downgrade(),
             backward: pins.d7.into_output().downgrade(),
-        }
+        },
     );
     robot.front_right.speed.enable();
     robot.front_left.speed.enable();
@@ -58,7 +63,7 @@ fn init()-> Context {
     robot.back_right.speed.enable();
 
     (0..255).for_each(|i| {
-        robot.go(255-i, 255-i);
+        robot.go(255 - i, 255 - i);
         delay_ms(10);
     });
 
@@ -73,12 +78,12 @@ fn init()-> Context {
     //     backward: pins.d7.into_output().downgrade(),
     // };
     // let mut front_right = Wheel {
-        // speed: pins.d9.into_output().downgrade(),
+    // speed: pins.d9.into_output().downgrade(),
     //     forward:  pins.d24.into_output().downgrade(),
     //     backward: pins.d22.into_output().downgrade(),
     // };
     // let mut back_right = Wheel {
-        // speed: pins.d11.into_output().downgrade(),
+    // speed: pins.d11.into_output().downgrade(),
     //     forward:  pins.d6.into_output().downgrade(),
     //     backward: pins.d5.into_output().downgrade(),
     // };
@@ -113,7 +118,7 @@ fn init()-> Context {
     Context { led }
 }
 
-fn iter( ctx:&mut Context, _: i32) {
+fn iter(ctx: &mut Context, _: i32) {
     ctx.led.enable();
     ctx.led.set_duty(255);
     arduino_hal::delay_ms(1000);
