@@ -1,7 +1,8 @@
 #![no_std]
 #![no_main]
 
-use arduino_hal::{port::{Pin, mode::Output}, hal::port::{PB7, Dynamic}, delay_ms};
+use arduino_hal::{port::{Pin, mode::Output}, hal::port::{PB7}};
+use arduino_learn::{Wheel, Robot};
 use panic_halt as _;
 
 struct Context{
@@ -13,87 +14,6 @@ fn main() -> ! {
     let mut ctx = init();
     loop {
         iter(&mut ctx);
-    }
-}
-
-struct Wheel {
-    speed: Pin<Output, Dynamic>,
-    forward: Pin<Output, Dynamic>,
-    backward: Pin<Output, Dynamic>,
-}
-
-impl Wheel {
-    fn stop(&mut self) {
-        self.speed.set_low();
-        self.forward.set_low();
-        self.backward.set_low();
-    }
-    fn go_forward(&mut self) {
-        self.speed.set_high();
-        self.forward.set_high();
-        self.backward.set_low();
-    }
-    fn go_bacwards(&mut self) {
-        self.speed.set_high();
-        self.forward.set_low();
-        self.backward.set_high();
-    }
-}
-
-struct Robot<'a> {
-    front_right:&'a mut Wheel,
-    front_left:&'a mut Wheel,
-    back_right:&'a mut Wheel,
-    back_left:&'a mut Wheel,
-}
-
-impl<'a> Robot<'a> {
-    fn forward(&mut self) {
-        self.front_left.go_forward();
-        self.front_right.go_forward();
-        self.back_left.go_forward();
-        self.back_right.go_forward();
-    }
-    fn backward(&mut self) {
-        self.front_left.go_bacwards();
-        self.front_right.go_bacwards();
-        self.back_left.go_bacwards();
-        self.back_right.go_bacwards();
-    }
-
-    fn turn_left(&mut self) {
-        self.front_left.go_bacwards();
-        self.front_right.go_forward();
-        self.back_left.go_bacwards();
-        self.back_right.go_forward();
-    }
-
-    fn turn_right(&mut self) {
-        self.front_left.go_forward();
-        self.front_right.go_bacwards();
-        self.back_left.go_forward();
-        self.back_right.go_bacwards();
-    }
-
-    fn right(&mut self) {
-        self.front_left.go_forward();
-        self.front_right.go_bacwards();
-        self.back_left.go_bacwards();
-        self.back_right.go_forward();
-    }
-
-    fn left(&mut self) {
-        self.front_left.go_bacwards();
-        self.front_right.go_forward();
-        self.back_left.go_forward();
-        self.back_right.go_bacwards();
-    }
-
-    fn stop(&mut self) {
-        self.back_left.stop();
-        self.back_right.stop();
-        self.front_left.stop();
-        self.front_right.stop();
     }
 }
 
@@ -131,24 +51,24 @@ fn init()-> Context {
     };
 
     robot.forward();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
     robot.stop();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
 
     robot.left();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
     robot.stop();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
 
     robot.backward();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
     robot.stop();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
 
     robot.right();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
     robot.stop();
-    delay_ms(1000);
+    arduino_hal::delay_ms(1000);
 
     Context { led }
 }
