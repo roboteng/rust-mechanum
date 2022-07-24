@@ -1,26 +1,26 @@
 #![no_std]
 
-use arduino_hal::{port::{Pin, mode::Output}, hal::port::{ Dynamic}};
+use arduino_hal::{port::{Pin, mode::{Output, PwmOutput}}, hal::port::{ Dynamic, PB7}, simple_pwm::{Timer0Pwm}};
 
 pub struct Wheel {
-  pub speed: Pin<Output, Dynamic>,
+  pub speed: Pin<PwmOutput<Timer0Pwm>, PB7>,
   pub forward: Pin<Output, Dynamic>,
   pub backward: Pin<Output, Dynamic>,
 }
 
 impl Wheel {
   pub fn stop(&mut self) {
-      self.speed.set_low();
+      self.speed.set_duty(0);
       self.forward.set_low();
       self.backward.set_low();
   }
   pub fn go_forward(&mut self) {
-      self.speed.set_high();
+      self.speed.set_duty(255);
       self.forward.set_high();
       self.backward.set_low();
   }
   pub fn go_bacwards(&mut self) {
-      self.speed.set_high();
+      self.speed.set_duty(255);
       self.forward.set_low();
       self.backward.set_high();
   }
