@@ -1,84 +1,102 @@
 #![no_std]
 
-use arduino_hal::{port::{Pin, mode::{Output, PwmOutput}}, hal::port::{ Dynamic, PB7}, simple_pwm::{Timer0Pwm}};
+use arduino_hal::{port::{Pin, mode::{Output, PwmOutput}}, hal::port::{ Dynamic,  PH6}, simple_pwm::*, Peripherals};
 
-pub struct Wheel {
-  pub speed: Pin<PwmOutput<Timer0Pwm>, PB7>,
+trait WH {
+    fn go(&mut self, dir: u8);
+}
+
+pub struct FRWheel {
+  pub speed: Pin<PwmOutput<Timer2Pwm>, PH6>,
   pub forward: Pin<Output, Dynamic>,
   pub backward: Pin<Output, Dynamic>,
 }
 
-impl Wheel {
-  pub fn stop(&mut self) {
-      self.speed.set_duty(0);
-      self.forward.set_low();
-      self.backward.set_low();
-  }
-  pub fn go_forward(&mut self) {
-      self.speed.set_duty(255);
-      self.forward.set_high();
-      self.backward.set_low();
-  }
-  pub fn go_bacwards(&mut self) {
-      self.speed.set_duty(255);
-      self.forward.set_low();
-      self.backward.set_high();
-  }
+impl FRWheel {
+    pub fn new(dp: Peripherals) -> FRWheel{
+      let pins = arduino_hal::pins!(dp);
+      let mut timer2 = Timer2Pwm::new(dp.TC2, Prescaler::Prescale64);
+
+      FRWheel {
+        speed: pins.d9.into_output().into_pwm(&mut timer2),
+        forward:  pins.d24.into_output().downgrade(),
+        backward: pins.d22.into_output().downgrade(),
+      }
+    }
 }
 
-pub struct Robot<'a> {
-  pub front_right:&'a mut Wheel,
-  pub  front_left:&'a mut Wheel,
-  pub back_right:&'a mut Wheel,
-  pub back_left:&'a mut Wheel,
+impl WH for FRWheel {
+    fn go(&mut self, dir: u8) {
+        if dir == 0{
+          self.speed.set_duty(0);
+          self.forward.set_low();
+          self.backward.set_low();
+        }
+        if dir > 0 {
+          self.speed.set_duty(dir);
+          self.forward.set_high();
+          self.backward.set_low();
+        }
+    }
 }
 
-impl<'a> Robot<'a> {
-  pub  fn forward(&mut self) {
-      self.front_left.go_forward();
-      self.front_right.go_forward();
-      self.back_left.go_forward();
-      self.back_right.go_forward();
-  }
-  pub fn backward(&mut self) {
-      self.front_left.go_bacwards();
-      self.front_right.go_bacwards();
-      self.back_left.go_bacwards();
-      self.back_right.go_bacwards();
-  }
+pub struct Robot {
+  pub front_right:FRWheel,
+}
 
-  pub fn turn_left(&mut self) {
-      self.front_left.go_bacwards();
-      self.front_right.go_forward();
-      self.back_left.go_bacwards();
-      self.back_right.go_forward();
+impl Robot {
+  pub fn new(fr: FRWheel) -> Robot {
+    Robot { front_right:fr }
   }
-
-  pub  fn turn_right(&mut self) {
-      self.front_left.go_forward();
-      self.front_right.go_bacwards();
-      self.back_left.go_forward();
-      self.back_right.go_bacwards();
-  }
-
-  pub fn right(&mut self) {
-      self.front_left.go_forward();
-      self.front_right.go_bacwards();
-      self.back_left.go_bacwards();
-      self.back_right.go_forward();
-  }
-
-  pub fn left(&mut self) {
-      self.front_left.go_bacwards();
-      self.front_right.go_forward();
-      self.back_left.go_forward();
-      self.back_right.go_bacwards();
-  }
-
-  pub fn stop(&mut self) {
-      self.back_left.stop();
-      self.back_right.stop();
-      self.front_left.stop();
-      self.front_right.stop();
+  pub fn go(&mut self,p: u8) {
+    self.front_right.go(p);
   }
 }
+//   pub  fn forward(&mut self) {
+//       self.front_left.go_forward();
+//       self.front_right.go_forward();
+//       self.back_left.go_forward();
+//       self.back_right.go_forward();
+//   }
+//   pub fn backward(&mut self) {
+//       self.front_left.go_bacwards();
+//       self.front_right.go_bacwards();
+//       self.back_left.go_bacwards();
+//       self.back_right.go_bacwards();
+//   }
+
+//   pub fn turn_left(&mut self) {
+//       self.front_left.go_bacwards();
+//       self.front_right.go_forward();
+//       self.back_left.go_bacwards();
+//       self.back_right.go_forward();
+//   }
+
+//   pub  fn turn_right(&mut self) {
+//       self.front_left.go_forward();
+//       self.front_right.go_bacwards();
+//       self.back_left.go_forward();
+//       self.back_right.go_bacwards();
+//   }
+
+//   pub fn right(&mut self) {
+//       self.front_left.go_forward();
+//       self.front_right.go_bacwards();
+//       self.back_left.go_bacwards();
+//       self.back_right.go_forward();
+//   }
+
+//   pub fn left(&mut self) {
+//       self.front_left.go_bacwards();
+//       self.front_right.go_forward();
+//       self.back_left.go_forward();
+//       self.back_right.go_bacwards();
+//   }
+
+//   pub fn stop(&mut self) {
+//       self.back_left.stop();
+//       self.back_right.stop();
+//       self.front_left.stop();
+//       self.front_right.stop();
+//   }
+// }

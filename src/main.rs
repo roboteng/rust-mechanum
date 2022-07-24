@@ -1,9 +1,9 @@
 #![no_std]
 #![no_main]
 
-use arduino_hal::{port::{Pin, mode::{PwmOutput}}, hal::port::{PB7, Dynamic}, simple_pwm::{Prescaler, Timer0Pwm}};
+use arduino_hal::{port::{Pin, mode::{PwmOutput}}, hal::port::{PB7}, simple_pwm::{Prescaler, Timer0Pwm, Timer2Pwm}, delay_ms};
 use arduino_hal::simple_pwm::IntoPwmPin;
-use arduino_learn::{Wheel, Robot};
+use arduino_learn::{Robot, FRWheel};
 use panic_halt as _;
 
 struct Context{
@@ -24,6 +24,18 @@ fn init()-> Context {
 
     let mut timer0 = Timer0Pwm::new(dp.TC0, Prescaler::Prescale64);
     let led = pins.d13.into_output().into_pwm(&mut timer0);
+    let mut timer0 = Timer2Pwm::new(dp.TC2, Prescaler::Prescale64);
+
+    let mut robot = Robot::new(FRWheel {
+        speed: pins.d9.into_output().into_pwm(&mut timer0),
+        forward:  pins.d24.into_output().downgrade(),
+        backward: pins.d22.into_output().downgrade(),
+    });
+    robot.front_right.speed.enable();
+
+    robot.go(255);
+    delay_ms(1000);
+    robot.go(128);
 
     // let mut front_left = Wheel {
     //     speed: pins.d10.into_output().downgrade(),
@@ -36,12 +48,12 @@ fn init()-> Context {
     //     backward: pins.d7.into_output().downgrade(),
     // };
     // let mut front_right = Wheel {
-    //     speed: pins.d9.into_output().downgrade(),
+        // speed: pins.d9.into_output().downgrade(),
     //     forward:  pins.d24.into_output().downgrade(),
     //     backward: pins.d22.into_output().downgrade(),
     // };
     // let mut back_right = Wheel {
-    //     speed: pins.d11.into_output().downgrade(),
+        // speed: pins.d11.into_output().downgrade(),
     //     forward:  pins.d6.into_output().downgrade(),
     //     backward: pins.d5.into_output().downgrade(),
     // };
