@@ -8,7 +8,7 @@ use arduino_hal::{
     port::{mode::PwmOutput, Pin},
     simple_pwm::{Prescaler, Timer0Pwm, Timer1Pwm, Timer2Pwm},
 };
-use arduino_learn::{FLWheel, FRWheel, RLWheel, RRWheel, Robot};
+use arduino_learn::{cos, sin, Dir, FLWheel, FRWheel, RLWheel, RRWheel, Robot};
 use panic_halt as _;
 
 struct Context {
@@ -62,8 +62,11 @@ fn init() -> Context {
     robot.back_left.speed.enable();
     robot.back_right.speed.enable();
 
-    (0..255).for_each(|i| {
-        robot.go(255 - i, 255 - i);
+    (-125..127).for_each(|i| {
+        let angle = i;
+        let x = cos(angle);
+        let y = sin(angle);
+        robot.go(&Dir::new(x, y));
         delay_ms(10);
     });
 
@@ -118,10 +121,4 @@ fn init() -> Context {
     Context { led }
 }
 
-fn iter(ctx: &mut Context, _: i32) {
-    ctx.led.enable();
-    ctx.led.set_duty(255);
-    arduino_hal::delay_ms(1000);
-    ctx.led.set_duty(64);
-    arduino_hal::delay_ms(1000);
-}
+fn iter(_: &mut Context, _: i32) {}

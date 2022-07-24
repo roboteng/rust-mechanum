@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 
 use arduino_hal::{
     hal::port::{Dynamic, PB4, PB5, PB6, PH6},
@@ -9,8 +9,23 @@ use arduino_hal::{
     simple_pwm::*,
 };
 
+pub struct Dir {
+    x: i8,
+    y: i8,
+}
+
+impl Dir {
+    pub fn new(x: i8, y: i8) -> Dir {
+        Dir { x, y }
+    }
+    pub fn dot(&self, other: &Dir) -> i8 {
+        return self.x * other.x + self.y * other.y;
+    }
+}
+
 trait WH {
-    fn go(&mut self, dir: i16);
+    fn go(&mut self, dir: i8);
+    fn dir() -> Dir;
 }
 
 pub struct FRWheel {
@@ -20,23 +35,27 @@ pub struct FRWheel {
 }
 
 impl WH for FRWheel {
-    fn go(&mut self, dir: i16) {
+    fn go(&mut self, dir: i8) {
         if dir == 0 {
             self.speed.set_duty(0);
             self.forward.set_low();
             self.backward.set_low();
         }
         if dir > 0 {
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_high();
             self.backward.set_low();
         }
         if dir < 0 {
             let dir = -dir;
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_low();
             self.backward.set_high();
         }
+    }
+
+    fn dir() -> Dir {
+        Dir::new(1, 1)
     }
 }
 pub struct FLWheel {
@@ -46,23 +65,27 @@ pub struct FLWheel {
 }
 
 impl WH for FLWheel {
-    fn go(&mut self, dir: i16) {
+    fn go(&mut self, dir: i8) {
         if dir == 0 {
             self.speed.set_duty(0);
             self.forward.set_low();
             self.backward.set_low();
         }
         if dir > 0 {
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_high();
             self.backward.set_low();
         }
         if dir < 0 {
             let dir = -dir;
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_low();
             self.backward.set_high();
         }
+    }
+
+    fn dir() -> Dir {
+        Dir::new(-1, 1)
     }
 }
 pub struct RLWheel {
@@ -72,23 +95,27 @@ pub struct RLWheel {
 }
 
 impl WH for RLWheel {
-    fn go(&mut self, dir: i16) {
+    fn go(&mut self, dir: i8) {
         if dir == 0 {
             self.speed.set_duty(0);
             self.forward.set_low();
             self.backward.set_low();
         }
         if dir > 0 {
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_high();
             self.backward.set_low();
         }
         if dir < 0 {
             let dir = -dir;
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_low();
             self.backward.set_high();
         }
+    }
+
+    fn dir() -> Dir {
+        Dir::new(1, 1)
     }
 }
 pub struct RRWheel {
@@ -98,23 +125,27 @@ pub struct RRWheel {
 }
 
 impl WH for RRWheel {
-    fn go(&mut self, dir: i16) {
+    fn go(&mut self, dir: i8) {
         if dir == 0 {
             self.speed.set_duty(0);
             self.forward.set_low();
             self.backward.set_low();
         }
         if dir > 0 {
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_high();
             self.backward.set_low();
         }
         if dir < 0 {
             let dir = -dir;
-            self.speed.set_duty(dir as u8);
+            self.speed.set_duty((dir) as u8);
             self.forward.set_low();
             self.backward.set_high();
         }
+    }
+
+    fn dir() -> Dir {
+        Dir::new(-1, 1)
     }
 }
 
@@ -134,58 +165,25 @@ impl Robot {
             back_right: br,
         }
     }
-    pub fn go(&mut self, p: u8, _: u8) {
-        self.front_left.go(p);
-        self.front_right.go(p);
-        self.back_left.go(p);
-        self.back_right.go(p);
+    pub fn go(&mut self, dir: &Dir) {
+        self.front_left.go(dir.dot(&FLWheel::dir()));
+        self.front_right.go(dir.dot(&FRWheel::dir()));
+        self.back_left.go(dir.dot(&RLWheel::dir()));
+        self.back_right.go(dir.dot(&RRWheel::dir()));
     }
 }
-//   pub  fn forward(&mut self) {
-//       self.front_left.go_forward();
-//       self.front_right.go_forward();
-//       self.back_left.go_forward();
-//       self.back_right.go_forward();
-//   }
-//   pub fn backward(&mut self) {
-//       self.front_left.go_bacwards();
-//       self.front_right.go_bacwards();
-//       self.back_left.go_bacwards();
-//       self.back_right.go_bacwards();
-//   }
 
-//   pub fn turn_left(&mut self) {
-//       self.front_left.go_bacwards();
-//       self.front_right.go_forward();
-//       self.back_left.go_bacwards();
-//       self.back_right.go_forward();
-//   }
+pub fn sin(x: i8) -> i8 {
+    let x = x as i32;
+    if x > 127 {
+        return sin((256 - x) as i8);
+    }
+    if x < -127 {
+        return sin((-x) as i8);
+    }
+    ((22 * x / 7) - (x * x * x / 3170) + (x * x * x * x * x / 105262034)) as i8
+}
 
-//   pub  fn turn_right(&mut self) {
-//       self.front_left.go_forward();
-//       self.front_right.go_bacwards();
-//       self.back_left.go_forward();
-//       self.back_right.go_bacwards();
-//   }
-
-//   pub fn right(&mut self) {
-//       self.front_left.go_forward();
-//       self.front_right.go_bacwards();
-//       self.back_left.go_bacwards();
-//       self.back_right.go_forward();
-//   }
-
-//   pub fn left(&mut self) {
-//       self.front_left.go_bacwards();
-//       self.front_right.go_forward();
-//       self.back_left.go_forward();
-//       self.back_right.go_bacwards();
-//   }
-
-//   pub fn stop(&mut self) {
-//       self.back_left.stop();
-//       self.back_right.stop();
-//       self.front_left.stop();
-//       self.front_right.stop();
-//   }
-// }
+pub fn cos(x: i8) -> i8 {
+    sin(x + 64)
+}
